@@ -28,8 +28,20 @@ module.exports = {
   },
   getUserById: (id, callBack) => {
     pool.query(
-      `SELECT id,username,created_at FROM users_table WHERE user_id = ?`,
+      `SELECT user_id,username,created_at FROM users_table WHERE user_id = ?`,
       [id],
+      (err, results, fields) => {
+        if (err) {
+          return callBack(err);
+        }
+        return callBack(null, results[0]);
+      }
+    );
+  },
+  getUserByUsername: (data, callBack) => {
+    pool.query(
+      `SELECT * FROM users_table WHERE username = ?`,
+      [data.username],
       (err, results, fields) => {
         if (err) {
           return callBack(err);
@@ -41,7 +53,7 @@ module.exports = {
   updateUser: (data, callBack) => {
     pool.query(
       `UPDATE users_table SET username=?, password=? WHERE user_id = ?`,
-      [data.username, data.password],
+      [data.username, data.password, data.user_id],
       (err, results, fields) => {
         if (err) {
           return callBack(err);
@@ -53,7 +65,7 @@ module.exports = {
   deleteUser: (data, callBack) => {
     pool.query(
       `DELETE FROM users_table WHERE user_id = ?`,
-      [data.id],
+      [data.user_id],
       (err, results, fields) => {
         if (err) {
           return callBack(err);

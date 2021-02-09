@@ -1,8 +1,10 @@
-const { genSaltSync, hashSync } = require("bcrypt");
+const { genSaltSync, hashSync, compareSync } = require("bcrypt");
+const { sign } = require("jsonwebtoken");
 const {
   create,
   getUsers,
   getUserById,
+  getUserByUsername,
   updateUser,
   deleteUser,
 } = require("./user.service");
@@ -98,6 +100,38 @@ module.exports = {
         success: 1,
         message: "Delete successfully",
       });
+    });
+  },
+  login: (req, res) => {
+    const body = req.body;
+    getUserByUsername(body, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          success: 0,
+          message: "DB Error",
+        });
+      }
+      if (!results) {
+        return res.json({
+          success: 0,
+          message: "Invalid email or password",
+        });
+      }
+
+      const result = compareSync(body.password, results.password);
+      if (result) {
+        results.password = undefined;
+        const token = sign({ result: results }, process.env.SECRET_KEY, {
+          expiresIn: "1m",
+        });
+        return res.status(200).json({
+          success: 1,
+          message: "Login successfully",
+          token,
+          data: results,
+        });
+      }
     });
   },
 };
